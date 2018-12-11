@@ -1,3 +1,6 @@
+import React from 'react'
+import TimelinesChart from 'timelines-chart'
+
 var _createClass = function () {
   function defineProperties(target, props) {
     for (var i = 0; i < props.length; i++) {
@@ -42,7 +45,7 @@ function _inherits(subClass, superClass) {
   });
   if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
 }
-var REST_API = '/api/v0/accesses/';
+var REST_API = 'http://192.168.88.234:8877/api/v0/accesses/';
 
 // The root component
 var App = function App(props) {
@@ -140,12 +143,14 @@ var UserListContainer = function (_React$Component) {
     key: 'loadData',
     value: function loadData() {
       var _this2 = this;
-      axios.get(REST_API).then(function (response) {
-        //console.log(response.data);
+      fetch(REST_API, { mode: "no-cors" }).then(response => {
+        console.log(response.body)
+        return response.json()
+      }).then(json => {
+        console.log(json);
         _this2.setState({
-          accesses: response.data
+          accesses: json.data
         });
-
       });
     }
 
@@ -244,13 +249,15 @@ var ClockView = function ClockView(props) {
   );
 };
 
-
 var UserList = function UserList(props) {
-
+  console.log(props)
   var data = []
-  var satellites = Array.prototype.map.call(props.accesses, function (p) { return p.satellite })
+  var satellites = []
+  if (props.accesses) {
+    satellites = props.accesses.map(p => p.satellite)
+  }
   var by_satellites = new Map(Array.prototype.map.call(satellites, function (s) { return [s, []] }))
-  for (p of props.accesses) {
+  for (const p of props.accesses) {
     by_satellites.get(p.satellite).push(p)
   }
 
@@ -259,13 +266,13 @@ var UserList = function UserList(props) {
     var labels = []
     var by_gs = new Map(Array.prototype.map.call(sat_accesses, function (s) { return [s.groundstation, []] }))
     console.log(by_gs)
-    for (p of sat_accesses) {
+    for (const p of sat_accesses) {
       console.log(p)
       by_gs.get(p.groundstation).push(p)
     }
     for (var [gs, gs_accesses] of by_gs) {
       var label = { "label": gs, "data": [] }
-      for (acc of gs_accesses) {
+      for (const acc of gs_accesses) {
         var _window = {
           "timeRange": [acc.start_time, acc.end_time],
           "val": gs
@@ -274,7 +281,7 @@ var UserList = function UserList(props) {
       }
       labels.push(label)
     }
-    group = { "group": sat, "data": labels }
+    const group = { "group": sat, "data": labels }
     res.push(group)
   }
   props.chart.data(res);
@@ -285,7 +292,4 @@ var UserList = function UserList(props) {
   );
 };
 
-
-// Render
-ReactDOM.render(
-  React.createElement(App, null), document.getElementById('root'));
+export default App
