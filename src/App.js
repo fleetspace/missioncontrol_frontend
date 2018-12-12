@@ -7,16 +7,11 @@ import UserListContainer from './passdisplay/UserListContainer'
 // The root component
 var App = function App(props) {
   return (
-    React.createElement('div', {
-      className: 'app'
-    },
-      React.createElement(ClockContainer, null),
-      React.createElement(UserListContainer, null)
-    )
+    <div className="app">
+      <ClockContainer />
+      <UserListContainer />
+    </div>
   )
 };
-
-// Presentation
-
 
 export default App

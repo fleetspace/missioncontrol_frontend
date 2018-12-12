@@ -9,13 +9,13 @@ var REST_API = '/api/v0/accesses/';
 class UserListContainer extends Component {
     constructor(props) {
         super(props)
-        var tchart = TimelinesChart()(document.body)
-            .zScaleLabel('My Scale Units')
-            .zQualitative(true)
-            .timeFormat("%Y-%m-%dT%H:%M:%S.%LZ")
-            .useUtc(true)
+        this.myRef = React.createRef()
 
-        this.state = { accesses: [], chart: tchart }
+
+        this.state = {
+            accesses: [],
+            chart: null,
+        }
     }
 
     loadData = () => {
@@ -29,6 +29,17 @@ class UserListContainer extends Component {
     }
 
     componentDidMount() {
+        const chart = TimelinesChart()
+
+        chart.zScaleLabel('My Scale Units')
+            .zQualitative(true)
+            .timeFormat("%Y-%m-%dT%H:%M:%S.%LZ")
+            .useUtc(true)
+
+        chart(this.myRef.current)
+
+        this.setState({ chart: chart })
+
         setInterval(() => {
             this.loadData();
         }, 300000)
@@ -36,7 +47,11 @@ class UserListContainer extends Component {
     }
 
     render() {
-        return <UserList accesses={this.state.accesses} chart={this.state.chart} />
+        return (
+            <div ref={this.myRef}>
+                {this.state.chart && <UserList accesses={this.state.accesses} chart={this.state.chart} />}
+            </div>
+        )
     }
 
 }

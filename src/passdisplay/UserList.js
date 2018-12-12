@@ -1,6 +1,6 @@
 import React from 'react'
 
-var UserList = function UserList(props) {
+const UserList = (props) => {
     var satellites = []
     if (props.accesses) {
         satellites = props.accesses.map(p => p.satellite)
@@ -31,13 +31,9 @@ var UserList = function UserList(props) {
         const group = { "group": sat, "data": labels }
         res.push(group)
     }
-    console.log(props)
     props.chart.data(res);
-    return (
-        React.createElement('div', {
-            className: 'access-list'
-        })
-    );
-};
+    return <div className="access-list"></div>
+}
+
 
 export default UserList

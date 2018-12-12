@@ -14,13 +14,14 @@ class ClockContainer extends Component {
         // Data is loaded async, therefore will be inserted after first DOM rendering
         setInterval(() => {
             this.setState({
-                curTime: new Date().toISOString()
+                utc: new Date().toISOString()
             })
-        }, 1000)
+            // Add random here so the clock looks a bit more ... well ... random
+        }, 100 + Math.random() * 10)
     }
 
     render() {
-        return <ClockView utc={this.state.currTime} />
+        return <ClockView utc={this.state.utc} />
     }
 }
 
