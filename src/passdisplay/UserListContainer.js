@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import TimelinesChart from 'timelines-chart'
 
 import UserList from './UserList'
+import AccessTable from './AccessTable'
 
 var REST_API = '/api/v0/accesses/';
 
@@ -48,8 +49,12 @@ class UserListContainer extends Component {
 
     render() {
         return (
-            <div ref={this.myRef}>
-                {this.state.chart && <UserList accesses={this.state.accesses} chart={this.state.chart} />}
+            <div>
+                <div ref={this.myRef}>
+                    {this.state.chart && <UserList accesses={this.state.accesses} chart={this.state.chart} />}
+
+                </div>
+                <AccessTable accesses={this.state.accesses} />
             </div>
         )
     }
