@@ -5,12 +5,17 @@ ADD package.json /package.json
 
 ENV NODE_PATH=/node_modules
 ENV PATH=$PATH:/node_modules/.bin
+
+ARG NODE_ENV
 RUN yarn
+
+COPY ./entrypoint /entrypoint
+
 WORKDIR /app
 ADD . /app
 
 EXPOSE 3000
 EXPOSE 35729
 
-ENTRYPOINT ["/bin/bash", "/app/run.sh"]
+ENTRYPOINT ["/entrypoint"]
 CMD ["start"]

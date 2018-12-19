@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -o errexit
+set -o pipefail
+set -o nounset
 
 case $1 in
   start)
@@ -10,6 +12,7 @@ case $1 in
     ;;
   build)
     yarn build
+    touch ${BUILD_COMPLETE_FILE}
     ;;
   test)
     yarn test $@
@@ -18,3 +21,4 @@ case $1 in
     exec "$@"
     ;;
 esac
+
