@@ -79,6 +79,7 @@ class AccessTable extends Component {
                     }
                     label="Use ISO8601 time formats"
                 />
+                <a href="/api/v0/ui/">Access API</a>
                 <Table className={classes.table}>
                     <TableHead>
                         <TableRow>
