@@ -3,8 +3,9 @@ import TimelinesChart from 'timelines-chart'
 
 import UserList from './UserList'
 import AccessTable from './AccessTable'
+import Auth from '../Auth'
+import { REST_API, TOKEN_KEY } from '../settings'
 
-var REST_API = '/api/v0/accesses/';
 
 // Container
 class UserListContainer extends Component {
@@ -12,21 +13,43 @@ class UserListContainer extends Component {
         super(props)
         this.myRef = React.createRef()
 
-
+        const token = localStorage.getItem(TOKEN_KEY)
         this.state = {
             accesses: [],
             chart: null,
+            token,
         }
     }
 
     loadData = () => {
-        fetch(REST_API).then(response => {
-            return response.json()
+        if (!this.state.token) {
+            return
+        }
+        const headers = {
+            Authorization: `Bearer ${this.state.token}`,
+        }
+        fetch(`${REST_API}accesses/`, { headers }).then(response => {
+            if (response.ok) {
+                return response.json()
+            } else {
+                throw Error(response)
+            }
         }).then(json => {
             this.setState({
                 accesses: json
             });
-        });
+        }).catch(error => {
+            this.setState({
+                accesses: [],
+                token: null,
+                chart: null,
+            })
+        })
+    }
+
+    onLogin = (token) => {
+        this.setState({ token })
+        this.loadData()
     }
 
     componentDidMount() {
@@ -51,12 +74,12 @@ class UserListContainer extends Component {
         return (
             <div>
                 <div ref={this.myRef}>
-                    {this.state.chart && <UserList accesses={this.state.accesses} chart={this.state.chart} />}
-
+                    {this.state.accesses.length > 0 && <UserList accesses={this.state.accesses} chart={this.state.chart} />}
                 </div>
-                <AccessTable accesses={this.state.accesses} />
+                {this.state.accesses.length > 0 ? <AccessTable accesses={this.state.accesses} /> : <Auth onLogin={this.onLogin} />}
             </div>
         )
+
     }
 
 }

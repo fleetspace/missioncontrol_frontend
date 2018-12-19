@@ -2,9 +2,10 @@ import React from 'react'
 
 const UserList = (props) => {
     var satellites = []
-    if (props.accesses) {
-        satellites = props.accesses.map(p => p.satellite)
+    if (!props.accesses) {
+        return null
     }
+    satellites = props.accesses.map(p => p.satellite)
     var by_satellites = new Map(Array.prototype.map.call(satellites, function (s) { return [s, []] }))
     for (const p of props.accesses) {
         by_satellites.get(p.satellite).push(p)
