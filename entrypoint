@@ -13,6 +13,7 @@ case $1 in
   build)
     yarn build
     touch ${BUILD_COMPLETE_FILE}
+    chmod 777 ${BUILD_COMPLETE_FILE}
     ;;
   test)
     yarn test $@
