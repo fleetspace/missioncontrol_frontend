@@ -17,7 +17,7 @@ class ClockContainer extends Component {
                 utc: new Date().toISOString()
             })
             // Add random here so the clock looks a bit more ... well ... random
-        }, 100 + Math.random() * 10)
+        }, 100 + (Math.random() * 100))
     }
 
     render() {
