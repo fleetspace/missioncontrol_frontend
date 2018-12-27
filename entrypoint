@@ -11,9 +11,9 @@ case $1 in
     yarn start | cat
     ;;
   build)
+    chmod a+w $(dirname ${BUILD_COMPLETE_FILE})
     yarn build
     touch ${BUILD_COMPLETE_FILE}
-    chmod 777 ${BUILD_COMPLETE_FILE}
     ;;
   test)
     yarn test $@
