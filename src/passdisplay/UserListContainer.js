@@ -1,9 +1,10 @@
 import React, { Component } from 'react'
 import TimelinesChart from 'timelines-chart'
+import jwt_decode from 'jwt-decode'
 
 import UserList from './UserList'
 import AccessTable from './AccessTable'
-import Auth from '../Auth'
+import Auth, {getToken} from '../Auth'
 import { REST_API, TOKEN_KEY } from '../settings'
 
 
@@ -13,11 +14,10 @@ class UserListContainer extends Component {
         super(props)
         this.myRef = React.createRef()
 
-        const token = localStorage.getItem(TOKEN_KEY)
         this.state = {
             accesses: [],
             chart: null,
-            token,
+            token: null,
         }
     }
 
@@ -42,7 +42,6 @@ class UserListContainer extends Component {
             this.setState({
                 accesses: [],
                 token: null,
-                chart: null,
             })
         })
     }
@@ -53,6 +52,8 @@ class UserListContainer extends Component {
     }
 
     componentDidMount() {
+        const token = localStorage.getItem(TOKEN_KEY)
+
         const chart = TimelinesChart()
 
         chart.zScaleLabel('My Scale Units')
@@ -62,21 +63,47 @@ class UserListContainer extends Component {
 
         chart(this.myRef.current)
 
-        this.setState({ chart: chart })
+        this.setState({ chart, token })
 
         setInterval(() => {
             this.loadData();
         }, 300000)
-        this.loadData();
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.token !== this.state.token) {
+            // Set up a timer to refresh it
+            let decoded = null
+            try {
+                decoded = jwt_decode(this.state.token)
+            } catch {
+                console.log("Couldn't decode....")
+            }
+
+            if (decoded !== null) {
+                const now = Math.floor(Date.now() / 1000)
+                if (decoded.exp > now) {
+                    const sleepSeconds = decoded.exp - now - 60 // At least 60 seconds before it expires
+                    setTimeout(() => {
+                        const headers = {
+                            Authorization: `Bearer ${this.state.token}`,
+                        }
+                        getToken(headers, this.onLogin)
+                    }, sleepSeconds * 1000)
+                }
+            }
+
+            this.loadData()
+        }
     }
 
     render() {
         return (
             <div>
                 <div ref={this.myRef}>
-                    {this.state.accesses.length > 0 && <UserList accesses={this.state.accesses} chart={this.state.chart} />}
+                    <UserList accesses={this.state.accesses} chart={this.state.chart} />
                 </div>
-                {this.state.accesses.length > 0 ? <AccessTable accesses={this.state.accesses} /> : <Auth onLogin={this.onLogin} />}
+                {this.state.token ? <AccessTable accesses={this.state.accesses} /> : <Auth onLogin={this.onLogin} />}
             </div>
         )
 

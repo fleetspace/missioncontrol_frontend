@@ -4,6 +4,15 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import { REST_API, TOKEN_KEY } from './settings'
 
+const getToken = (headers, callback) => {
+    fetch(`${REST_API}auth/jwt`, { headers }).then(response => {
+        return response.text()
+    }).then(text => {
+        localStorage[TOKEN_KEY] = text
+        callback(text)
+    })
+}
+
 class Auth extends Component {
     state = {
         username: '',
@@ -21,13 +30,8 @@ class Auth extends Component {
         const headers = {
             Authorization: 'Basic ' + btoa(username + ":" + password),
         }
+        getToken(headers, this.props.onLogin)
 
-        fetch(`${REST_API}auth/jwt`, { headers }).then(response => {
-            return response.text()
-        }).then(text => {
-            localStorage[TOKEN_KEY] = text
-            this.props.onLogin(text)
-        })
     }
 
     render() {
@@ -46,3 +50,6 @@ class Auth extends Component {
 }
 
 export default Auth
+export {
+    getToken,
+}

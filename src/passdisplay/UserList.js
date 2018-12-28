@@ -2,7 +2,7 @@ import React from 'react'
 
 const UserList = (props) => {
     var satellites = []
-    if (!props.accesses) {
+    if (!props.accesses || !props.chart) {
         return null
     }
     satellites = props.accesses.map(p => p.satellite)
