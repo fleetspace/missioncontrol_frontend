@@ -52,8 +52,8 @@ class AccessTable extends Component {
                 end_time_local = end_time.toISOString(true)
             } else {
                 const dateFormat = "L LTS ZZ"
-                start_time_utc = start_time.format(dateFormat, { timeZone: 'UTC' })
-                end_time_utc = end_time.format(dateFormat, { timeZone: 'UTC' })
+                start_time_utc = start_time.clone().utc().format(dateFormat)
+                end_time_utc = end_time.clone().utc().format(dateFormat)
                 start_time_local = start_time.format(dateFormat)
                 end_time_local = end_time.format(dateFormat)
             }
