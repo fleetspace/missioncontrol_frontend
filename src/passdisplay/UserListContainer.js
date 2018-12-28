@@ -83,7 +83,8 @@ class UserListContainer extends Component {
             if (decoded !== null) {
                 const now = Math.floor(Date.now() / 1000)
                 if (decoded.exp > now) {
-                    const sleepSeconds = decoded.exp - now - 60 // At least 60 seconds before it expires
+                    // At least 60 seconds before it expires, but not in the past
+                    const sleepSeconds = max(decoded.exp - now - 60, 0)
                     setTimeout(() => {
                         const headers = {
                             Authorization: `Bearer ${this.state.token}`,
