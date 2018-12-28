@@ -1,8 +1,7 @@
 import React, { Component } from 'react'
-import TimelinesChart from 'timelines-chart'
 import jwt_decode from 'jwt-decode'
 
-import UserList from './UserList'
+import AccessChart from './AccessChart'
 import AccessTable from './AccessTable'
 import Auth, {getToken} from '../Auth'
 import { REST_API, TOKEN_KEY } from '../settings'
@@ -12,11 +11,9 @@ import { REST_API, TOKEN_KEY } from '../settings'
 class UserListContainer extends Component {
     constructor(props) {
         super(props)
-        this.myRef = React.createRef()
 
         this.state = {
             accesses: [],
-            chart: null,
             token: null,
         }
     }
@@ -54,16 +51,7 @@ class UserListContainer extends Component {
     componentDidMount() {
         const token = localStorage.getItem(TOKEN_KEY)
 
-        const chart = TimelinesChart()
-
-        chart.zScaleLabel('My Scale Units')
-            .zQualitative(true)
-            .timeFormat("%Y-%m-%dT%H:%M:%S.%LZ")
-            .useUtc(true)
-
-        chart(this.myRef.current)
-
-        this.setState({ chart, token })
+        this.setState({ token })
 
         setInterval(() => {
             this.loadData();
@@ -100,9 +88,7 @@ class UserListContainer extends Component {
     render() {
         return (
             <div>
-                <div ref={this.myRef}>
-                    <UserList accesses={this.state.accesses} chart={this.state.chart} />
-                </div>
+                <AccessChart accesses={this.state.accesses} />
                 {this.state.token ? <AccessTable accesses={this.state.accesses} /> : <Auth onLogin={this.onLogin} />}
             </div>
         )
