@@ -9,7 +9,7 @@ import { REST_API, TOKEN_KEY } from '../settings'
 
 
 // Container
-class UserListContainer extends Component {
+class AccessListContainer extends Component {
     constructor(props) {
         super(props)
         this.myRef = React.createRef()
@@ -113,4 +113,4 @@ class UserListContainer extends Component {
 }
 
 
-export default UserListContainer
+export default AccessListContainer
