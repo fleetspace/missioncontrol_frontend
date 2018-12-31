@@ -1,10 +1,11 @@
 import React, { Component } from 'react'
 import TimelinesChart from 'timelines-chart'
 import jwt_decode from 'jwt-decode'
+import uuidv4 from 'uuid/v4'
 
 import UserList from './UserList'
 import AccessTable from './AccessTable'
-import Auth, {getToken} from '../Auth'
+import Auth, { getToken } from '../Auth'
 import { REST_API, TOKEN_KEY } from '../settings'
 
 
@@ -16,8 +17,17 @@ class AccessListContainer extends Component {
 
         this.state = {
             accesses: [],
+            passes: [],
             chart: null,
             token: null,
+        }
+    }
+
+    getHeaders = () => {
+        return {
+            Authorization: `Bearer ${this.state.token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
         }
     }
 
@@ -25,9 +35,8 @@ class AccessListContainer extends Component {
         if (!this.state.token) {
             return
         }
-        const headers = {
-            Authorization: `Bearer ${this.state.token}`,
-        }
+        const headers = this.getHeaders()
+
         fetch(`${REST_API}accesses/`, { headers }).then(response => {
             if (response.ok) {
                 return response.json()
@@ -44,11 +53,94 @@ class AccessListContainer extends Component {
                 token: null,
             })
         })
+
+        fetch(`${REST_API}passes/`, { headers }).then(response => {
+            if (response.ok) {
+                return response.json()
+            } else {
+                throw Error(response)
+            }
+        }).then(json => {
+            this.setState({
+                passes: json
+            });
+        }).catch(error => {
+            this.setState({
+                passes: [],
+                token: null,
+            })
+        })
     }
 
     onLogin = (token) => {
         this.setState({ token })
         this.loadData()
+    }
+
+    onAddPasses = (accessIds) => {
+        console.debug("Adding passes: ", accessIds)
+        // Generate a UUID for the pass
+        for (const access_id of accessIds) {
+            const body = {
+                access_id,
+            }
+
+            const uuid = uuidv4()
+            fetch(`${REST_API}passes/${uuid}/`, {
+                headers: this.getHeaders(),
+                method: 'PUT',
+                body: JSON.stringify(body),
+            }).then(response => {
+                if (response.ok) {
+                    return response.json()
+                } else {
+                    throw Error(response)
+                }
+            }).then(json => {
+                this.setState(prevState => {
+                    const passes = [
+                        ...prevState.passes,
+                        json,
+                    ]
+                    return { passes }
+                })
+            })
+        }
+    }
+
+    onCancelPasses = (accessIds) => {
+        console.log("Cancelling passes", accessIds)
+        const passesByAccess = new Map()
+        for (const pass of this.state.passes) {
+            if (passesByAccess.has(pass.access_id)) {
+                passesByAccess.get(pass.access_id).push(pass)
+            } else {
+                passesByAccess.set(pass.access_id, [pass])
+            }
+        }
+
+        for (const accessId of accessIds) {
+            // Find the relevant passes
+            for (const pass of passesByAccess.get(accessId)) {
+                const body = {is_desired: false}
+                fetch(`${REST_API}passes/${pass.uuid}/`, {
+                    headers: this.getHeaders(),
+                    method: 'PATCH',
+                    body: JSON.stringify(body),
+                }).then(response => {
+                    if (response.ok) {
+                        return response.json()
+                    } else {
+                        throw Error(response)
+                    }
+                }).then(json => {
+                    this.setState(prevState => {
+                        const passes = prevState.passes.filter(x => x.uuid !== pass.uuid)
+                        return { passes }
+                    })
+                })
+            }
+        }
     }
 
     componentDidMount() {
@@ -104,7 +196,12 @@ class AccessListContainer extends Component {
                 <div ref={this.myRef}>
                     <UserList accesses={this.state.accesses} chart={this.state.chart} />
                 </div>
-                {this.state.token ? <AccessTable accesses={this.state.accesses} /> : <Auth onLogin={this.onLogin} />}
+                {this.state.token ? <AccessTable
+                    accesses={this.state.accesses}
+                    passes={this.state.passes}
+                    onCancelPasses={this.onCancelPasses}
+                    onAddPasses={this.onAddPasses}
+                /> : <Auth onLogin={this.onLogin} />}
             </div>
         )
 

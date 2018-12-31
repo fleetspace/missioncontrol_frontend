@@ -1,26 +1,14 @@
 import React, { Component } from 'react'
 import moment from 'moment'
-import { withStyles } from '@material-ui/core/styles';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
+import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import MUIDataTable from 'mui-datatables'
 
+import PassRow from './PassRow';
+import SelectedRowToolbar from './SelectedRowToolbar'
 
-const styles = theme => ({
-    root: {
-        width: '100%',
-        marginTop: theme.spacing.unit * 3,
-        overflowX: 'auto',
-    },
-    table: {
-        minWidth: 700,
-    },
-});
 
 class AccessTable extends Component {
     constructor(props) {
@@ -36,43 +24,150 @@ class AccessTable extends Component {
         })
     }
 
+    getMuiTheme = () => createMuiTheme({
+        typography: {
+            useNextVariants: true,
+        },
+        overrides: {
+            MuiTableCell: {
+                root: {
+                    paddingRight: 24,
+                }
+            },
+        }
+    })
+
     render() {
-        const { classes, accesses } = this.props
+        const { accesses, passes } = this.props
         const { isoformat } = this.state
 
-        const rows = accesses.map(access => {
+        if (accesses.length < 1) {
+            return null
+        }
+
+        const access_columns = new Set(Object.keys(accesses[0]))
+
+        // Remove start_time end_time as we calculate the UTC and local separately
+        for (const col of ["start_time", "end_time"]) {
+            access_columns.delete(col)
+        }
+
+        const columns_set = new Set([
+            "scheduled",
+            ...access_columns,
+            "start_time_utc",
+            "end_time_utc",
+            "start_time_local",
+            "end_time_local",
+        ])
+
+        const columns = []
+        for (const column of columns_set) {
+            let filter = false
+            let display = 'true'
+            let hint = undefined
+            let customBodyRender = undefined
+
+            if (column.startsWith("_")) {
+                display = 'excluded'
+            }
+
+            if (['id', 'source_tle', 'access_id', 'external_id', 'uuid', 'is_valid', 'scheduled_on_sat'].indexOf(column) >= 0) {
+                display = 'false'
+            }
+
+            if (['groundstation', 'satellite'].indexOf(column) >= 0) {
+                filter = true
+            }
+
+            if (['is_desired', 'is_valid', 'scheduled_on_gs', 'scheduled_on_sat'].indexOf(column) >= 0) {
+                customBodyRender = (value) => {
+                    return value ? 'Y' : ""
+                }
+            }
+
+            columns.push({
+                name: column,
+                options: {
+                    filter,
+                    display,
+                    hint,
+                    customBodyRender,
+                }
+            })
+
+        }
+
+        const columnIndexes = new Map()
+        for (const [index, { name }] of columns.entries()) {
+            columnIndexes.set(name, index)
+        }
+
+
+        const passesByAccess = new Map()
+        for (const pass of passes) {
+            if (!passesByAccess.has(pass.access_id)) {
+                passesByAccess.set(pass.access_id, [pass])
+            } else {
+                passesByAccess.get(pass.access_id).push(pass)
+            }
+        }
+
+        const rows = []
+        for (const access of accesses) {
             const start_time = moment(access.start_time)
             const end_time = moment(access.end_time)
 
-            let start_time_utc, end_time_utc, start_time_local, end_time_local
             if (isoformat) {
-                start_time_utc = start_time.toISOString()
-                end_time_utc = end_time.toISOString()
-                start_time_local = start_time.toISOString(true)
-                end_time_local = end_time.toISOString(true)
+                access.start_time_utc = start_time.toISOString()
+                access.end_time_utc = end_time.toISOString()
+                access.start_time_local = start_time.toISOString(true)
+                access.end_time_local = end_time.toISOString(true)
             } else {
                 const dateFormat = "L LTS ZZ"
-                start_time_utc = start_time.clone().utc().format(dateFormat)
-                end_time_utc = end_time.clone().utc().format(dateFormat)
-                start_time_local = start_time.format(dateFormat)
-                end_time_local = end_time.format(dateFormat)
+                access.start_time_utc = start_time.clone().utc().format(dateFormat)
+                access.end_time_utc = end_time.clone().utc().format(dateFormat)
+                access.start_time_local = start_time.format(dateFormat)
+                access.end_time_local = end_time.format(dateFormat)
             }
 
-            return (
-                <TableRow key={access.id}>
-                    <TableCell>{access.id}</TableCell>
-                    <TableCell>{access.groundstation}</TableCell>
-                    <TableCell>{access.satellite}</TableCell>
-                    <TableCell>{start_time_utc}</TableCell>
-                    <TableCell>{end_time_utc}</TableCell>
-                    <TableCell>{start_time_local}</TableCell>
-                    <TableCell>{end_time_local}</TableCell>
-                    <TableCell>{access.max_alt}</TableCell>
-                </TableRow>
-            )
-        })
+            if (passesByAccess.has(access.id)) {
+                access.scheduled = "Y"
+            } else {
+                access.scheduled = ""
+            }
+
+
+            const row = []
+            for (const col of columns) {
+                if (access.hasOwnProperty(col.name)) {
+                    row.push(access[col.name])
+                } else {
+                    row.push("")
+                }
+            }
+            rows.push(row)
+        }
+
+        // Add a row for passes with no access ID
+        if (passesByAccess.has("")) {
+            const row = []
+            for (const col of columns) {
+                if (col.name === 'scheduled') {
+                    row.push("Y")
+                } else if (col.name === 'groundstation') {
+                    row.push("Passes with no access:")
+                } else {
+                    row.push("")
+                }
+            }
+            rows.push(row)
+        }
+
+
+
         return (
-            <Paper className={classes.root}>
+            <Paper>
                 <FormControlLabel
                     control={
                         <Switch checked={this.state.isoformat} onChange={this.toggleIsoFormat} />
@@ -80,26 +175,51 @@ class AccessTable extends Component {
                     label="Use ISO8601 time formats"
                 />
                 <a href="/api/v0/ui/">Access API</a>
-                <Table className={classes.table}>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Ground Station</TableCell>
-                            <TableCell>Satellite</TableCell>
-                            <TableCell>UTC start</TableCell>
-                            <TableCell>UTC end</TableCell>
-                            <TableCell>Local start</TableCell>
-                            <TableCell>Local end</TableCell>
-                            <TableCell>Max altitude</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {rows}
-                    </TableBody>
-                </Table>
+                <MuiThemeProvider theme={this.getMuiTheme()}>
+                    <MUIDataTable title="Accesses and Passes" data={rows} columns={columns}
+                        options={{
+                            rowsPerPage: 100,
+                            expandableRows: true,
+                            padding: 'dense',
+                            renderExpandableRow: (rowData, rowMeta) => <PassRow
+                                rowMeta={rowMeta} rowData={rowData} passesByAccess={passesByAccess}
+                                accessColumnIndexes={columnIndexes} isoformat={isoformat} />,
+                            customToolbarSelect: (selectedRows, displayData, setSelectedRows) => <SelectedRowToolbar
+                                selectedRows={selectedRows} displayData={displayData}
+                                setSelectedRows={setSelectedRows}
+                                onAddPasses={this.props.onAddPasses}
+                                onCancelPasses={this.props.onCancelPasses}
+                                idIndex={columnIndexes.get('id')}
+                                />,
+                            customSort: (data, index, order) => {
+                                const field = columns[index]
+                                if (['start_time_utc', 'end_time_utc', 'start_time_local', 'end_time_local'].indexOf(field) >= 0) {
+                                    data.sort((left, right) => {
+                                        return (moment(left.data[index]).isAfter(right.data[index]) ? 1 : -1) * (order === 'asc' ? 1 : -1)
+                                    })
+                                } else {
+                                    data.sort((left, right) => {
+                                        try {
+                                            return left.data[index].localeCompare(right.data[index]) * (order === 'asc' ? 1 : -1)
+                                        } catch {
+                                            if (left.data[index] === right.data[index]) {
+                                                return 0
+                                            } else {
+                                                return (left.data[index] > right.data[index] ? 1 : -1) * (order === 'asc' ? 1 : -1)
+                                            }
+                                        }
+
+                                    })
+                                }
+                                return data
+                            }
+                        }}
+                    />
+                </MuiThemeProvider>
+
             </Paper>
         )
     }
 }
 
-export default withStyles(styles)(AccessTable)
+export default AccessTable
