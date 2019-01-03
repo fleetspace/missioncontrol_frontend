@@ -38,7 +38,7 @@ class AccessTable extends Component {
     })
 
     render() {
-        const { accesses, passes } = this.props
+        const { accesses, passes, scripts } = this.props
         const { isoformat } = this.state
 
         if (accesses.length < 1) {
@@ -190,6 +190,7 @@ class AccessTable extends Component {
                                 onAddPasses={this.props.onAddPasses}
                                 onCancelPasses={this.props.onCancelPasses}
                                 idIndex={columnIndexes.get('id')}
+                                scripts={scripts}
                                 />,
                             customSort: (data, index, order) => {
                                 const field = columns[index]

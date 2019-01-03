@@ -18,6 +18,7 @@ class AccessListContainer extends Component {
         this.state = {
             accesses: [],
             passes: [],
+            scripts: [],
             chart: null,
             token: null,
         }
@@ -70,6 +71,23 @@ class AccessListContainer extends Component {
                 token: null,
             })
         })
+
+        fetch(`${REST_API}passscripts/`, { headers }).then(response => {
+            if (response.ok) {
+                return response.json()
+            } else {
+                throw Error(response)
+            }
+        }).then(json => {
+            this.setState({
+                scripts: json
+            });
+        }).catch(error => {
+            this.setState({
+                scripts: [],
+                token: null,
+            })
+        })
     }
 
     onLogin = (token) => {
@@ -77,12 +95,12 @@ class AccessListContainer extends Component {
         this.loadData()
     }
 
-    onAddPasses = (accessIds) => {
-        console.debug("Adding passes: ", accessIds)
+    onAddPasses = (accessIds, script) => {
         // Generate a UUID for the pass
         for (const access_id of accessIds) {
             const body = {
                 access_id,
+                script,
             }
 
             const uuid = uuidv4()
@@ -109,7 +127,6 @@ class AccessListContainer extends Component {
     }
 
     onCancelPasses = (accessIds) => {
-        console.log("Cancelling passes", accessIds)
         const passesByAccess = new Map()
         for (const pass of this.state.passes) {
             if (passesByAccess.has(pass.access_id)) {
@@ -199,6 +216,7 @@ class AccessListContainer extends Component {
                 {this.state.token ? <AccessTable
                     accesses={this.state.accesses}
                     passes={this.state.passes}
+                    scripts={this.state.scripts}
                     onCancelPasses={this.onCancelPasses}
                     onAddPasses={this.onAddPasses}
                 /> : <Auth onLogin={this.onLogin} />}
