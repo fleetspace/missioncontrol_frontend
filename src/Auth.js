@@ -25,7 +25,8 @@ class Auth extends Component {
         })
     }
 
-    handleSubmit = () => {
+    handleSubmit = (event) => {
+        event.preventDefault()
         const { username, password } = this.state
         const headers = {
             Authorization: 'Basic ' + btoa(username + ":" + password),
@@ -43,7 +44,7 @@ class Auth extends Component {
                 <TextField id="password" label="Password" value={this.state.password}
                     onChange={this.handleChange('password')} type="password"
                     autoComplete="current-password" />
-                <Button onClick={this.handleSubmit} color="primary" variant="contained">Log In</Button>
+                <Button onClick={this.handleSubmit} color="primary" variant="contained" type="submit">Log In</Button>
             </form>
         )
     }
