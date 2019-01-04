@@ -31,14 +31,20 @@ class AccessTable extends Component {
         overrides: {
             MuiTableCell: {
                 root: {
-                    paddingRight: 24,
+                    paddingRight: 10,
+                    paddingLeft: 10,
                 }
             },
-        }
+            MUIDataTable: {
+                responsiveScroll: {
+                    maxHeight: 'inherit',
+                },
+            },
+        },
     })
 
     render() {
-        const { accesses, passes, scripts } = this.props
+        const { accesses, passes, scripts, groundstations } = this.props
         const { isoformat } = this.state
 
         if (accesses.length < 1) {
@@ -59,6 +65,7 @@ class AccessTable extends Component {
             "end_time_utc",
             "start_time_local",
             "end_time_local",
+            "_passes_read_only",
         ])
 
         const columns = []
@@ -76,7 +83,7 @@ class AccessTable extends Component {
                 display = 'false'
             }
 
-            if (['groundstation', 'satellite'].indexOf(column) >= 0) {
+            if (['groundstation', 'satellite', 'scheduled'].indexOf(column) >= 0) {
                 filter = true
             }
 
@@ -113,8 +120,14 @@ class AccessTable extends Component {
             }
         }
 
+        const groundstationsByName = new Map()
+        for (const groundstation of groundstations) {
+            groundstationsByName.set(groundstation.hwid, groundstation)
+        }
+
         const rows = []
         for (const access of accesses) {
+            access._passes_read_only = `${groundstationsByName.get(access.groundstation).passes_read_only}`
             const start_time = moment(access.start_time)
             const end_time = moment(access.end_time)
 
@@ -124,7 +137,7 @@ class AccessTable extends Component {
                 access.start_time_local = start_time.toISOString(true)
                 access.end_time_local = end_time.toISOString(true)
             } else {
-                const dateFormat = "L LTS ZZ"
+                const dateFormat = "Y-MM-DD HH:mm:ss ZZ"
                 access.start_time_utc = start_time.clone().utc().format(dateFormat)
                 access.end_time_utc = end_time.clone().utc().format(dateFormat)
                 access.start_time_local = start_time.format(dateFormat)
@@ -165,7 +178,6 @@ class AccessTable extends Component {
         }
 
 
-
         return (
             <Paper>
                 <FormControlLabel
@@ -181,6 +193,7 @@ class AccessTable extends Component {
                             rowsPerPage: 100,
                             expandableRows: true,
                             padding: 'dense',
+                            responsive: 'scroll',
                             renderExpandableRow: (rowData, rowMeta) => <PassRow
                                 rowMeta={rowMeta} rowData={rowData} passesByAccess={passesByAccess}
                                 accessColumnIndexes={columnIndexes} isoformat={isoformat} />,
@@ -189,7 +202,7 @@ class AccessTable extends Component {
                                 setSelectedRows={setSelectedRows}
                                 onAddPasses={this.props.onAddPasses}
                                 onCancelPasses={this.props.onCancelPasses}
-                                idIndex={columnIndexes.get('id')}
+                                columnIndexes={columnIndexes}
                                 scripts={scripts}
                                 />,
                             customSort: (data, index, order) => {
@@ -201,13 +214,9 @@ class AccessTable extends Component {
                                 } else {
                                     data.sort((left, right) => {
                                         try {
-                                            return left.data[index].localeCompare(right.data[index]) * (order === 'asc' ? 1 : -1)
+                                            return left.data[index].localeCompare(right.data[index]) * (order === 'asc' ? -1 : 1)
                                         } catch {
-                                            if (left.data[index] === right.data[index]) {
-                                                return 0
-                                            } else {
-                                                return (left.data[index] > right.data[index] ? 1 : -1) * (order === 'asc' ? 1 : -1)
-                                            }
+                                            return (left.data[index] - right.data[index]) * (order === 'asc' ? -1 : 1)
                                         }
 
                                     })

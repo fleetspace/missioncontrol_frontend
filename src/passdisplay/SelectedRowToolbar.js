@@ -3,11 +3,11 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import Select from 'react-select'
 import IconButton from '@material-ui/core/IconButton'
+import { Button } from '@material-ui/core';
 import Tooltip from '@material-ui/core/Tooltip'
 import DeleteIcon from '@material-ui/icons/Delete'
 import AddIcon from '@material-ui/icons/Add'
-
-
+import ErrorIcon from '@material-ui/icons/Error'
 
 class SelectedRowToolbar extends Component {
     constructor(props) {
@@ -18,7 +18,8 @@ class SelectedRowToolbar extends Component {
     }
 
     handleCancelPasses = () => {
-        const { onCancelPasses, idIndex, selectedRows, displayData } = this.props
+        const { onCancelPasses, columnIndexes, selectedRows, displayData } = this.props
+        const idIndex = columnIndexes.get('id')
         const selectedIndexes = selectedRows.data.map(x => x.index)
         const accessIds = displayData.map(x => x.data[idIndex]).filter(
             (_, index) => selectedIndexes.indexOf(index) >= 0)
@@ -27,8 +28,8 @@ class SelectedRowToolbar extends Component {
     }
 
     handleAddPasses = (...args) => {
-        console.log(this.props)
-        const { onAddPasses, idIndex, selectedRows, displayData } = this.props
+        const { onAddPasses, columnIndexes, selectedRows, displayData } = this.props
+        const idIndex = columnIndexes.get('id')
         const selectedIndexes = selectedRows.data.map(x => x.index)
         const accessIds = displayData.map(x => x.data[idIndex]).filter(
             (_, index) => selectedIndexes.indexOf(index) >= 0)
@@ -41,6 +42,42 @@ class SelectedRowToolbar extends Component {
         })
     }
 
+    getValidRows = () => {
+        const { selectedRows, displayData, columnIndexes } = this.props
+
+        console.log(this.props)
+        const newSelectedRows = []
+        for (const row of selectedRows.data) {
+            const data = displayData[row.index].data
+            const readOnly = data[columnIndexes.get('_passes_read_only')]
+            const scheduled = data[columnIndexes.get('scheduled')] !== ''
+            if (readOnly === 'false' || scheduled) {
+                newSelectedRows.push(row.index)
+            }
+        }
+        return newSelectedRows
+    }
+
+    handleRemoveInvalid = () => {
+        const { setSelectedRows } = this.props
+        setSelectedRows(this.getValidRows())
+    }
+
+    errors = () => {
+        const { selectedRows } = this.props
+        if (this.getValidRows().length < selectedRows.data.length) {
+            return (
+                <Tooltip title={"Some selected accesses are managed externally and cannot be scheduled here"}>
+                    <Button onClick={this.handleRemoveInvalid}>
+                        <ErrorIcon />
+                        Deselect read only accesses
+                </Button>
+                </Tooltip>
+            )
+        }
+        return null
+    }
+
     render() {
         const {scripts} = this.props
 
@@ -51,8 +88,11 @@ class SelectedRowToolbar extends Component {
             }
         })
 
+        const errors = this.errors()
+        const disabled = errors !== null
         return (
             <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                    {errors || <span>
                     Add pass:
                     <div style={{flex: 1, position: 'relative'}}>
                     <Select
@@ -64,24 +104,26 @@ class SelectedRowToolbar extends Component {
                         isSearchable
                     />
                     </div>
+                    </span>}
                 <Tooltip title={"Add passes from access"}>
-                    <IconButton onClick={this.handleAddPasses} aria-label="Add passes from accesses">
+                    <IconButton onClick={this.handleAddPasses} aria-label="Add passes from accesses" disabled={disabled}>
                         <AddIcon />
                     </IconButton>
                 </Tooltip>
 
-                <Tooltip title={"Delete passes from accesses"}>
-                    <IconButton onClick={this.handleCancelPasses} aria-label="Delete passes">
-                        <DeleteIcon />
-                    </IconButton>
-                </Tooltip>
-            </div>
+
+                    <Tooltip title={"Delete passes from accesses"}>
+                        <IconButton onClick={this.handleCancelPasses} aria-label="Delete passes" disabled={disabled}>
+                            <DeleteIcon />
+                        </IconButton>
+                    </Tooltip>
+                </div>
         )
     }
 }
 
 SelectedRowToolbar.propTypes = {
-    idIndex: PropTypes.number.isRequired,
+    columnIndexes: PropTypes.object.isRequired,
     onAddPasses: PropTypes.func.isRequired,
     onCancelPasses: PropTypes.func.isRequired,
     scripts: PropTypes.arrayOf(PropTypes.string).isRequired,
