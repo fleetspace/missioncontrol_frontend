@@ -70,6 +70,23 @@ class AccessListContainer extends Component {
                 token: null,
             })
         })
+
+        fetch(`${REST_API}groundstations/`, { headers }).then(response => {
+            if (response.ok) {
+                return response.json()
+            } else {
+                throw Error(response)
+            }
+        }).then(json => {
+            this.setState({
+                groundstations: json
+            });
+        }).catch(error => {
+            this.setState({
+                groundstations: [],
+                token: null,
+            })
+        })
     }
 
     onLogin = (token) => {
@@ -199,6 +216,7 @@ class AccessListContainer extends Component {
                 {this.state.token ? <AccessTable
                     accesses={this.state.accesses}
                     passes={this.state.passes}
+                    groundstations={this.state.groundstations}
                     onCancelPasses={this.onCancelPasses}
                     onAddPasses={this.onAddPasses}
                 /> : <Auth onLogin={this.onLogin} />}
