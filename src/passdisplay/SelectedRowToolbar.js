@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import Select from 'react-select'
 import IconButton from '@material-ui/core/IconButton'
-import { Button } from '@material-ui/core';
+import { Button, Typography } from '@material-ui/core';
 import Tooltip from '@material-ui/core/Tooltip'
 import DeleteIcon from '@material-ui/icons/Delete'
 import AddIcon from '@material-ui/icons/Add'
@@ -90,10 +90,12 @@ class SelectedRowToolbar extends Component {
 
         const errors = this.errors()
         const disabled = errors !== null
+
         return (
-            <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                    {errors || <span>
-                    Add pass:
+            <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 20}}>
+                    <Typography>Add pass:</Typography>
+                    {errors ||
+
                     <div style={{flex: 1, position: 'relative'}}>
                     <Select
                         options={scriptOptions}
@@ -104,7 +106,7 @@ class SelectedRowToolbar extends Component {
                         isSearchable
                     />
                     </div>
-                    </span>}
+                    }
                 <Tooltip title={"Add passes from access"}>
                     <IconButton onClick={this.handleAddPasses} aria-label="Add passes from accesses" disabled={disabled}>
                         <AddIcon />
