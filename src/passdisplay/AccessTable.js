@@ -16,7 +16,8 @@ class AccessTable extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            isoformat: false
+            isoformat: false,
+            timezoneOffset: new Date().getTimezoneOffset(),
         }
     }
 
@@ -101,6 +102,14 @@ class AccessTable extends Component {
                     return value ? 'Y' : ""
                 }
             }
+
+            // If current itmezone is UTC, no need to show local times
+            if (this.state.timezoneOffset === 0) {
+                if (['start_time_local', 'end_time_local'].indexOf(column) >= 0) {
+                    display = 'false'
+                }
+            }
+
 
             columns.push({
                 name: column,
