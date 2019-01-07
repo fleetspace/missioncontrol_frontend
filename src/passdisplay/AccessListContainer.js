@@ -19,6 +19,7 @@ class AccessListContainer extends Component {
             accesses: [],
             passes: [],
             scripts: [],
+            groundstations: [],
             chart: null,
             token: null,
         }

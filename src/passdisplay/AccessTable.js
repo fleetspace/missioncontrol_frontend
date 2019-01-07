@@ -5,6 +5,8 @@ import Paper from '@material-ui/core/Paper';
 import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import MUIDataTable from 'mui-datatables'
+import PropTypes from 'prop-types';
+import isEqual from 'react-fast-compare'
 
 import PassRow from './PassRow';
 import SelectedRowToolbar from './SelectedRowToolbar'
@@ -42,6 +44,13 @@ class AccessTable extends Component {
             },
         },
     })
+
+    shouldComponentUpdate(nextProps) {
+        // Do a deep compare for this.
+        // Not the best, but works for now - will need to migrate to
+        // redux or similar if it becomes an issue.
+        return !isEqual(this.props, nextProps)
+    }
 
     render() {
         const { accesses, passes, scripts, groundstations } = this.props
@@ -126,7 +135,9 @@ class AccessTable extends Component {
         }
 
         const rows = []
-        for (const access of accesses) {
+        for (const access_initial of accesses) {
+            // So we don't modify the props themselves!
+            const access = {...access_initial}
             access._passes_read_only = `${groundstationsByName.get(access.groundstation).passes_read_only}`
             const start_time = moment(access.start_time)
             const end_time = moment(access.end_time)
@@ -230,6 +241,15 @@ class AccessTable extends Component {
             </Paper>
         )
     }
+}
+
+AccessTable.propTypes = {
+    onAddPasses: PropTypes.func.isRequired,
+    onCancelPasses: PropTypes.func.isRequired,
+    accesses: PropTypes.array.isRequired,
+    passes: PropTypes.array.isRequired,
+    scripts: PropTypes.array.isRequired,
+    groundstations: PropTypes.array.isRequired,
 }
 
 export default AccessTable
