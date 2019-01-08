@@ -8,6 +8,7 @@ import Tooltip from '@material-ui/core/Tooltip'
 import DeleteIcon from '@material-ui/icons/Delete'
 import AddIcon from '@material-ui/icons/Add'
 import ErrorIcon from '@material-ui/icons/Error'
+import Chip from '@material-ui/core/Chip'
 
 class SelectedRowToolbar extends Component {
     constructor(props) {
@@ -42,10 +43,9 @@ class SelectedRowToolbar extends Component {
         })
     }
 
-    getValidRows = () => {
+    getEditableRows = () => {
         const { selectedRows, displayData, columnIndexes } = this.props
 
-        console.log(this.props)
         const newSelectedRows = []
         for (const row of selectedRows.data) {
             const data = displayData[row.index].data
@@ -58,14 +58,42 @@ class SelectedRowToolbar extends Component {
         return newSelectedRows
     }
 
+    getDeleteableRows = () => {
+        const { selectedRows, displayData, columnIndexes } = this.props
+
+        const newSelectedRows = []
+        for (const row of selectedRows.data) {
+            const data = displayData[row.index].data
+            const readOnly = data[columnIndexes.get('_passes_read_only')]
+            if (readOnly === 'false') {
+                newSelectedRows.push(row.index)
+            }
+        }
+        return newSelectedRows
+    }
+
+    multipleSatellitesSelected = () => {
+        const { selectedRows, displayData, columnIndexes } = this.props
+        const satellites = new Set()
+        for (const row of selectedRows.data) {
+            const data = displayData[row.index].data
+            const satellite = data[columnIndexes.get('satellite')]
+            satellites.add(satellite)
+            if (satellites.size > 1) {
+                return true
+            }
+        }
+        return false
+    }
+
     handleRemoveInvalid = () => {
         const { setSelectedRows } = this.props
-        setSelectedRows(this.getValidRows())
+        setSelectedRows(this.getEditableRows())
     }
 
     errors = () => {
         const { selectedRows } = this.props
-        if (this.getValidRows().length < selectedRows.data.length) {
+        if (this.getEditableRows().length < selectedRows.data.length) {
             return (
                 <Tooltip title={"Some selected accesses are managed externally and cannot be scheduled here"}>
                     <Button onClick={this.handleRemoveInvalid}>
@@ -74,12 +102,42 @@ class SelectedRowToolbar extends Component {
                 </Button>
                 </Tooltip>
             )
+        } else if (this.multipleSatellitesSelected()) {
+            return (
+                <Chip color="secondary" icon={<ErrorIcon />}
+                    label="Multiple satellites are selected. Please select only a single satellite. (Tip: Use filters)" />
+            )
         }
         return null
     }
 
+    deleteButton = (disabled) => {
+        const { selectedRows } = this.props
+        if (this.getDeleteableRows().length < selectedRows.data.length) {
+            return (
+                <Tooltip title={"Cannot delete readonly passes"}>
+                    <div>
+                        <IconButton aria-label="Delete passes" disabled={true}>
+                            <DeleteIcon />
+                        </IconButton>
+                    </div>
+                </Tooltip>
+            )
+        } else {
+            return (
+                <Tooltip title={"Delete passes from accesses"}>
+                    <div>
+                        <IconButton onClick={this.handleCancelPasses} aria-label="Delete passes" disabled={disabled}>
+                            <DeleteIcon />
+                        </IconButton>
+                    </div>
+                </Tooltip>
+            )
+        }
+    }
+
     render() {
-        const {scripts} = this.props
+        const { scripts } = this.props
 
         const scriptOptions = scripts.map(script => {
             return {
@@ -92,34 +150,32 @@ class SelectedRowToolbar extends Component {
         const disabled = errors !== null
 
         return (
-            <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 20}}>
-                    <Typography>Add pass:</Typography>
-                    {errors ||
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 20 }}>
+                <Typography>Add pass:</Typography>
+                {errors ||
 
-                    <div style={{flex: 1, position: 'relative'}}>
-                    <Select
-                        options={scriptOptions}
-                        value={this.state.script}
-                        onChange={this.handleScriptChange}
-                        placeholder="Script to run during passes"
-                        isClearable
-                        isSearchable
-                    />
+                    <div style={{ flex: 1, position: 'relative' }}>
+                        <Select
+                            options={scriptOptions}
+                            value={this.state.script}
+                            onChange={this.handleScriptChange}
+                            placeholder="Script to run during passes"
+                            isClearable
+                            isSearchable
+                        />
                     </div>
-                    }
-                <Tooltip title={"Add passes from access"}>
-                    <IconButton onClick={this.handleAddPasses} aria-label="Add passes from accesses" disabled={disabled}>
-                        <AddIcon />
-                    </IconButton>
+                }
+                <Tooltip title={"Add / update passes from access"}>
+                    <div>
+                        <IconButton onClick={this.handleAddPasses} aria-label="Add / update passes from accesses" disabled={disabled}>
+                            <AddIcon />
+                        </IconButton>
+                    </div>
                 </Tooltip>
 
 
-                    <Tooltip title={"Delete passes from accesses"}>
-                        <IconButton onClick={this.handleCancelPasses} aria-label="Delete passes" disabled={disabled}>
-                            <DeleteIcon />
-                        </IconButton>
-                    </Tooltip>
-                </div>
+                {this.deleteButton(disabled)}
+            </div>
         )
     }
 }

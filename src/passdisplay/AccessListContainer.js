@@ -114,33 +114,61 @@ class AccessListContainer extends Component {
     }
 
     onAddPasses = (accessIds, script) => {
+        const passesByAccess = new Map()
+        for (const pass of this.state.passes) {
+            if (passesByAccess.has(pass.access_id)) {
+                passesByAccess.get(pass.access_id).push(pass)
+            } else {
+                passesByAccess.set(pass.access_id, [pass])
+            }
+        }
+
         // Generate a UUID for the pass
         for (const access_id of accessIds) {
-            const body = {
-                access_id,
-                script,
+            let uuids = []
+
+            // Check if we have a pass for this access already,
+            // update it if so
+            if (passesByAccess.has(access_id)) {
+                const passes = passesByAccess.get(access_id)
+                uuids = passes.map(pass => pass.uuid)
+
+            } else {
+                uuids = [uuidv4()]
             }
 
-            const uuid = uuidv4()
-            fetch(`${REST_API}passes/${uuid}/`, {
-                headers: this.getHeaders(),
-                method: 'PUT',
-                body: JSON.stringify(body),
-            }).then(response => {
-                if (response.ok) {
-                    return response.json()
-                } else {
-                    throw Error(response)
+            for (const uuid of uuids) {
+                const body = {
+                    access_id,
+                    script,
                 }
-            }).then(json => {
-                this.setState(prevState => {
-                    const passes = [
-                        ...prevState.passes,
-                        json,
-                    ]
-                    return { passes }
+
+                fetch(`${REST_API}passes/${uuid}/`, {
+                    headers: this.getHeaders(),
+                    method: 'PUT',
+                    body: JSON.stringify(body),
+                }).then(response => {
+                    if (response.ok) {
+                        return response.json()
+                    } else {
+                        throw Error(response)
+                    }
+                }).then(json => {
+                    this.setState(prevState => {
+                        // Remove the old pass
+                        const passes = []
+                        for (const pass of prevState.passes) {
+                            if (pass.uuid === uuid) {
+                                continue
+                            }
+                            passes.push(pass)
+                        }
+                        passes.push(json)
+                        return { passes }
+                    })
                 })
-            })
+            }
+
         }
     }
 
