@@ -70,6 +70,7 @@ class AccessTable extends Component {
 
         const columns_set = new Set([
             "scheduled",
+            "script",
             ...access_columns,
             "start_time_utc",
             "end_time_utc",
@@ -166,6 +167,11 @@ class AccessTable extends Component {
 
             if (passesByAccess.has(access.id)) {
                 access.scheduled = "Y"
+
+                const passes = passesByAccess.get(access.id)
+                if (passes.length == 1 ) {
+                    access.script = passes[0].script
+                }
             } else {
                 access.scheduled = ""
             }
