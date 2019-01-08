@@ -169,7 +169,7 @@ class AccessTable extends Component {
                 access.scheduled = "Y"
 
                 const passes = passesByAccess.get(access.id)
-                if (passes.length == 1 ) {
+                if (passes.length === 1 ) {
                     access.script = passes[0].script
                 }
             } else {
