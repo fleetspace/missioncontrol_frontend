@@ -22,8 +22,8 @@ class AccessTable extends Component {
     }
 
     toggleIsoFormat = () => {
-        this.setState((prevState) => {
-            return { isoformat: !prevState.isoformat }
+        this.setState(({isoformat}) => {
+            return { isoformat: !isoformat }
         })
     }
 
@@ -46,11 +46,11 @@ class AccessTable extends Component {
         },
     })
 
-    shouldComponentUpdate(nextProps) {
+    shouldComponentUpdate(nextProps, nextState) {
         // Do a deep compare for this.
         // Not the best, but works for now - will need to migrate to
         // redux or similar if it becomes an issue.
-        return !isEqual(this.props, nextProps)
+        return !isEqual(this.props, nextProps) || !isEqual(this.state, nextState)
     }
 
     render() {

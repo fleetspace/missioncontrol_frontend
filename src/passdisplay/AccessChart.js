@@ -1,12 +1,17 @@
-import React, {Component} from 'react'
+import React, { Component } from 'react'
 
 import TimelinesChart from 'timelines-chart'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import Switch from '@material-ui/core/Switch'
 
 class AccessChart extends Component {
     constructor(props) {
         super(props)
         this.myRef = React.createRef()
         this.chart = null
+        this.state = {
+            utc: true,
+        }
     }
 
     componentDidMount() {
@@ -18,9 +23,17 @@ class AccessChart extends Component {
         this.renderTimeline()
     }
 
+    toggleUTC = () => {
+        this.setState(({ utc }) => {
+            return { utc: !utc }
+        })
+    }
+
     renderTimeline() {
         const props = this.props
         var satellites = []
+        let min = new Date()
+        let max = new Date()
 
         satellites = props.accesses.map(p => p.satellite)
         var by_satellites = new Map(Array.prototype.map.call(satellites, function (s) { return [s, []] }))
@@ -42,6 +55,8 @@ class AccessChart extends Component {
                         "timeRange": [acc.start_time, acc.end_time],
                         "val": gs
                     }
+                    max = Math.max(max, new Date(acc.end_time))
+                    min = Math.min(min, new Date(acc.start_time))
                     label.data.push(_window)
                 }
                 labels.push(label)
@@ -54,24 +69,40 @@ class AccessChart extends Component {
             return
         }
 
+        min = new Date(min)
+        max = new Date(max)
+
         if (!this.chart) {
             const chart = TimelinesChart()
 
             chart.zScaleLabel('My Scale Units')
                 .zQualitative(true)
                 .timeFormat("%Y-%m-%dT%H:%M:%S.%LZ")
-                .useUtc(true)
-
-            chart.data(res)
-            chart(this.myRef.current)
+                .useUtc(this.state.utc)
+                .data(res)(this.myRef.current)
+                .overviewDomain([min, max])
+                .zoomX([min, max])
             this.chart = chart
         } else {
             this.chart.data(res)
+                .overviewDomain([min, max])
+                .useUtc(this.state.utc)
+                .zoomX([min, max])
         }
     }
 
     render() {
-        return <div ref={this.myRef}>Loading...</div>
+        return (
+            <div>
+                <FormControlLabel
+                    control={
+                        <Switch checked={this.state.utc} onChange={this.toggleUTC} />
+                    }
+                    label="Display Timeline in UTC"
+                />
+                <div ref={this.myRef}></div>
+            </div>
+        )
     }
 }
 
