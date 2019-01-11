@@ -35,9 +35,14 @@ class AccessListContainer extends Component {
         if (!this.state.token) {
             return
         }
+
+        // Go at least 5 days forward
+        const end_date = new Date()
+        end_date.setDate(end_date.getDate() + 5)
+
         const headers = this.getHeaders()
 
-        fetch(`${REST_API}accesses/`, { headers }).then(response => {
+        fetch(`${REST_API}accesses/?range_end=${end_date.toISOString()}&limit=500`, { headers }).then(response => {
             if (response.ok) {
                 return response.json()
             } else {
