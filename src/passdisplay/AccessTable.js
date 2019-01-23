@@ -54,7 +54,7 @@ class AccessTable extends Component {
     }
 
     render() {
-        const { accesses, passes, scripts, groundstations } = this.props
+        const { accesses, passes, taskStacks, groundstations, satellites } = this.props
         const { isoformat } = this.state
 
         if (accesses.length < 1) {
@@ -70,7 +70,7 @@ class AccessTable extends Component {
 
         const columns_set = new Set([
             "scheduled",
-            "script",
+            "task_stack",
             ...access_columns,
             "start_time_utc",
             "end_time_utc",
@@ -144,6 +144,16 @@ class AccessTable extends Component {
             groundstationsByName.set(groundstation.hwid, groundstation)
         }
 
+        const satellitesByHwid = new Map()
+        for (const satellite of satellites) {
+            satellitesByHwid.set(satellite.hwid, satellite)
+        }
+
+        const taskStacksByUUID = new Map()
+        for (const taskStack of taskStacks) {
+            taskStacksByUUID.set(taskStack.uuid, taskStack)
+        }
+
         const rows = []
         for (const access_initial of accesses) {
             // So we don't modify the props themselves!
@@ -165,12 +175,29 @@ class AccessTable extends Component {
                 access.end_time_local = end_time.format(dateFormat)
             }
 
+            const default_task_stack_uuid = satellitesByHwid.get(access.satellite).task_stack
+            if (default_task_stack_uuid) {
+                if (taskStacksByUUID.has(default_task_stack_uuid)) {
+                    access.task_stack = `(default) ${taskStacksByUUID.get(default_task_stack_uuid).name}`
+                } else {
+                    access.task_stack = `(default - unpinned) ${default_task_stack_uuid}`
+                }
+
+            }
+
             if (passesByAccess.has(access.id)) {
                 access.scheduled = "Y"
 
                 const passes = passesByAccess.get(access.id)
                 if (passes.length === 1 ) {
-                    access.script = passes[0].script
+                    const pass = passes[0]
+                    if (pass.task_stack) {
+                        if (taskStacksByUUID.has(pass.task_stack)) {
+                            access.task_stack = taskStacksByUUID.get(pass.task_stack).name
+                        } else {
+                            access.task_stack = `(unpinned) ${pass.task_stack}`
+                        }
+                    }
                 }
             } else {
                 access.scheduled = ""
@@ -229,7 +256,7 @@ class AccessTable extends Component {
                                 onAddPasses={this.props.onAddPasses}
                                 onCancelPasses={this.props.onCancelPasses}
                                 columnIndexes={columnIndexes}
-                                scripts={scripts}
+                                taskStacks={taskStacks}
                                 />,
                             customSort: (data, index, order) => {
                                 const field = columns[index]
@@ -263,8 +290,9 @@ AccessTable.propTypes = {
     onCancelPasses: PropTypes.func.isRequired,
     accesses: PropTypes.array.isRequired,
     passes: PropTypes.array.isRequired,
-    scripts: PropTypes.array.isRequired,
+    taskStacks: PropTypes.array.isRequired,
     groundstations: PropTypes.array.isRequired,
+    satellites: PropTypes.array.isRequired,
 }
 
 export default AccessTable

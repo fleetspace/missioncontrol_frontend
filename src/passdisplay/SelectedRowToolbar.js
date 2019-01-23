@@ -137,12 +137,12 @@ class SelectedRowToolbar extends Component {
     }
 
     render() {
-        const { scripts } = this.props
+        const { taskStacks } = this.props
 
-        const scriptOptions = scripts.map(script => {
+        const taskStackOptions = taskStacks.map(taskStack => {
             return {
-                label: script,
-                value: script,
+                label: taskStack.name,
+                value: taskStack.uuid,
             }
         })
 
@@ -151,12 +151,12 @@ class SelectedRowToolbar extends Component {
 
         return (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 20 }}>
-                <Typography>Add pass:</Typography>
+                <Typography>Override task-stack:</Typography>
                 {errors ||
 
                     <div style={{ flex: 1, position: 'relative' }}>
                         <Select
-                            options={scriptOptions}
+                            options={taskStackOptions}
                             value={this.state.script}
                             onChange={this.handleScriptChange}
                             placeholder="Script to run during passes"
@@ -184,7 +184,13 @@ SelectedRowToolbar.propTypes = {
     columnIndexes: PropTypes.object.isRequired,
     onAddPasses: PropTypes.func.isRequired,
     onCancelPasses: PropTypes.func.isRequired,
-    scripts: PropTypes.arrayOf(PropTypes.string).isRequired,
+    taskStacks: PropTypes.arrayOf(PropTypes.shape({
+        created: PropTypes.string.isRequired,
+        environment: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+        tasks: PropTypes.arrayOf(PropTypes.string).isRequired,
+        uuid: PropTypes.string.isRequired,
+    })).isRequired,
 }
 
 

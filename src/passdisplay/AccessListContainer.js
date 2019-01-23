@@ -17,8 +17,9 @@ class AccessListContainer extends Component {
         this.state = {
             accesses: [],
             passes: [],
-            scripts: [],
+            taskStacks: [],
             groundstations: [],
+            satellites: [],
             token: null,
         }
     }
@@ -76,7 +77,7 @@ class AccessListContainer extends Component {
             })
         })
 
-        fetch(`${REST_API}passscripts/`, { headers }).then(response => {
+        fetch(`${REST_API}task-stacks/`, { headers }).then(response => {
             if (response.ok) {
                 return response.json()
             } else {
@@ -84,11 +85,11 @@ class AccessListContainer extends Component {
             }
         }).then(json => {
             this.setState({
-                scripts: json
+                taskStacks: json
             });
         }).catch(error => {
             this.setState({
-                scripts: [],
+                taskStacks: [],
                 token: null,
             })
         })
@@ -109,6 +110,23 @@ class AccessListContainer extends Component {
                 token: null,
             })
         })
+
+        fetch(`${REST_API}satellites/`, {headers}).then(response => {
+            if (response.ok) {
+                return response.json()
+            } else {
+                throw Error(response)
+            }
+        }).then(satellites => {
+            this.setState({
+                satellites,
+            })
+        }).catch(error => {
+            this.setState({
+                satellites: [],
+                token: null,
+            })
+        })
     }
 
     onLogin = (token) => {
@@ -116,7 +134,7 @@ class AccessListContainer extends Component {
         this.loadData()
     }
 
-    onAddPasses = (accessIds, script) => {
+    onAddPasses = (accessIds, taskStack) => {
         const passesByAccess = new Map()
         for (const pass of this.state.passes) {
             if (passesByAccess.has(pass.access_id)) {
@@ -143,7 +161,7 @@ class AccessListContainer extends Component {
             for (const uuid of uuids) {
                 const body = {
                     access_id,
-                    script,
+                    task_stack: taskStack,
                 }
 
                 fetch(`${REST_API}passes/${uuid}/`, {
@@ -254,8 +272,9 @@ class AccessListContainer extends Component {
                 {this.state.token ? <AccessTable
                     accesses={this.state.accesses}
                     passes={this.state.passes}
-                    scripts={this.state.scripts}
+                    taskStacks={this.state.taskStacks}
                     groundstations={this.state.groundstations}
+                    satellites={this.state.satellites}
                     onCancelPasses={this.onCancelPasses}
                     onAddPasses={this.onAddPasses}
                 /> : <Auth onLogin={this.onLogin} />}
