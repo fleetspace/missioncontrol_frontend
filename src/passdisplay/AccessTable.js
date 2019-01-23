@@ -175,8 +175,14 @@ class AccessTable extends Component {
                 access.end_time_local = end_time.format(dateFormat)
             }
 
-            if (satellitesByHwid.get(access.satellite).task_stack) {
-                access.task_stack = `(default) ${taskStacksByUUID.get(satellitesByHwid.get(access.satellite).task_stack).name}`
+            const default_task_stack_uuid = satellitesByHwid.get(access.satellite).task_stack
+            if (default_task_stack_uuid) {
+                if (taskStacksByUUID.has(default_task_stack_uuid)) {
+                    access.task_stack = `(default) ${taskStacksByUUID.get(default_task_stack_uuid).name}`
+                } else {
+                    access.task_stack = `(default - unpinned) ${default_task_stack_uuid}`
+                }
+
             }
 
             if (passesByAccess.has(access.id)) {
@@ -186,7 +192,11 @@ class AccessTable extends Component {
                 if (passes.length === 1 ) {
                     const pass = passes[0]
                     if (pass.task_stack) {
-                        access.task_stack = taskStacksByUUID.get(pass.task_stack).name
+                        if (taskStacksByUUID.has(pass.task_stack)) {
+                            access.task_stack = taskStacksByUUID.get(pass.task_stack).name
+                        } else {
+                            access.task_stack = `(unpinned) ${pass.task_stack}`
+                        }
                     }
                 }
             } else {
