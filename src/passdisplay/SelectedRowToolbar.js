@@ -72,20 +72,6 @@ class SelectedRowToolbar extends Component {
         return newSelectedRows
     }
 
-    multipleSatellitesSelected = () => {
-        const { selectedRows, displayData, columnIndexes } = this.props
-        const satellites = new Set()
-        for (const row of selectedRows.data) {
-            const data = displayData[row.index].data
-            const satellite = data[columnIndexes.get('satellite')]
-            satellites.add(satellite)
-            if (satellites.size > 1) {
-                return true
-            }
-        }
-        return false
-    }
-
     handleRemoveInvalid = () => {
         const { setSelectedRows } = this.props
         setSelectedRows(this.getEditableRows())
@@ -101,11 +87,6 @@ class SelectedRowToolbar extends Component {
                         Deselect read only accesses
                 </Button>
                 </Tooltip>
-            )
-        } else if (this.multipleSatellitesSelected()) {
-            return (
-                <Chip color="secondary" icon={<ErrorIcon />}
-                    label="Multiple satellites are selected. Please select only a single satellite. (Tip: Use filters)" />
             )
         }
         return null
