@@ -1,13 +1,13 @@
 FROM node:8
 
-ADD yarn.lock /yarn.lock
+ADD package-lock.json /package-lock.json
 ADD package.json /package.json
 
 ENV NODE_PATH=/node_modules
 ENV PATH=$PATH:/node_modules/.bin
 
 ARG NODE_ENV
-RUN yarn
+RUN npm ci
 
 COPY ./entrypoint /entrypoint
 
