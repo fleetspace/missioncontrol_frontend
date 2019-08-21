@@ -8,15 +8,15 @@ case $1 in
   start)
     # The '| cat' is to trick Node that this is an non-TTY terminal
     # then react-scripts won't clear the console.
-    yarn start | cat
+    npm run start | cat
     ;;
   build)
     chmod a+w $(dirname ${BUILD_COMPLETE_FILE})
-    yarn build
+    npm run build
     touch ${BUILD_COMPLETE_FILE}
     ;;
   test)
-    yarn test $@
+    npm test $@
     ;;
   *)
     exec "$@"
