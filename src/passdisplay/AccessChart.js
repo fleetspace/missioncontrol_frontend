@@ -3,6 +3,7 @@ import React, { Component } from 'react'
 import TimelinesChart from 'timelines-chart'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import Switch from '@material-ui/core/Switch'
+import moment from 'moment'
 
 class AccessChart extends Component {
     constructor(props) {
@@ -89,6 +90,7 @@ class AccessChart extends Component {
                 .useUtc(this.state.utc)
                 .zoomX([min, max])
         }
+        this.chart.dateMarker(moment())
     }
 
     render() {
