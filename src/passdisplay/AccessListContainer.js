@@ -1,12 +1,19 @@
 import React, { Component } from 'react'
 import jwt_decode from 'jwt-decode'
 import uuidv4 from 'uuid/v4'
+import TextField from '@material-ui/core/TextField';
+import moment from 'moment'
+
 
 import AccessChart from './AccessChart'
 import AccessTable from './AccessTable'
 import Auth, { getToken } from '../Auth'
 import { REST_API, TOKEN_KEY } from '../settings'
 
+
+
+const defaultDuration = moment.duration(5, "days")
+const textDateFormat = "YYYY-MM-DDTHH:mm"
 
 // Container
 class AccessListContainer extends Component {
@@ -15,6 +22,9 @@ class AccessListContainer extends Component {
         this.myRef = React.createRef()
 
         this.state = {
+            pristine: true,
+            start: moment.utc(),
+            end: moment.utc().add(defaultDuration),
             accesses: [],
             passes: [],
             taskStacks: [],
@@ -32,18 +42,9 @@ class AccessListContainer extends Component {
         }
     }
 
-    loadData = () => {
-        if (!this.state.token) {
-            return
-        }
-
-        // Go at least 5 days forward
-        const end_date = new Date()
-        end_date.setDate(end_date.getDate() + 5)
-
+    loadAccesses = () => {
         const headers = this.getHeaders()
-
-        fetch(`${REST_API}accesses/?range_end=${end_date.toISOString()}&limit=500`, { headers }).then(response => {
+        fetch(`${REST_API}accesses/?range_start=${this.state.start.toISOString()}&range_end=${this.state.end.toISOString()}&limit=500`, { headers }).then(response => {
             if (response.ok) {
                 return response.json()
             } else {
@@ -59,6 +60,16 @@ class AccessListContainer extends Component {
                 token: null,
             })
         })
+    }
+
+    loadData = () => {
+        if (!this.state.token) {
+            return
+        }
+
+        const headers = this.getHeaders()
+
+        this.loadAccesses()
 
         fetch(`${REST_API}passes/`, { headers }).then(response => {
             if (response.ok) {
@@ -233,7 +244,13 @@ class AccessListContainer extends Component {
         this.setState({ token })
 
         setInterval(() => {
-            this.loadData();
+            if (this.state.pristine) {
+                this.setState({
+                    start: moment.utc(),
+                    end: moment.utc().add(defaultDuration)
+                })
+                this.loadData();
+            }
         }, 300000)
     }
 
@@ -265,9 +282,27 @@ class AccessListContainer extends Component {
         }
     }
 
+    handleChangeStart = (event) => {
+        this.setState({
+            start: moment.utc(event.target.value),
+            pristine: false,
+        }, this.loadAccesses)
+    }
+
+    handleChangeEnd = (event) => {
+        this.setState({
+            end: moment.utc(event.target.value),
+            pristine: false,
+        }, this.loadAccesses)
+    }
+
     render() {
         return (
             <div>
+                <div>
+                    <TextField label="Start" type="datetime-local" defaultValue={this.state.start.format(textDateFormat)} onChange={this.handleChangeStart} />
+                    <TextField label="End" type="datetime-local" defaultValue={this.state.end.format(textDateFormat)} onChange={this.handleChangeEnd} />
+                </div>
                 {<AccessChart accesses={this.state.accesses} />}
                 {this.state.token ? <AccessTable
                     accesses={this.state.accesses}
