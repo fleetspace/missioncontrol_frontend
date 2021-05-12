@@ -8,7 +8,6 @@ import Tooltip from '@material-ui/core/Tooltip'
 import DeleteIcon from '@material-ui/icons/Delete'
 import AddIcon from '@material-ui/icons/Add'
 import ErrorIcon from '@material-ui/icons/Error'
-import Chip from '@material-ui/core/Chip'
 
 class SelectedRowToolbar extends Component {
     constructor(props) {
