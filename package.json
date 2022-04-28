@@ -7,15 +7,14 @@
     "@material-ui/icons": "^3.0.1",
     "http-proxy-middleware": "^0.19.1",
     "jwt-decode": "^2.2.0",
-    "moment": "^2.22.2",
+    "moment": "^2.29.2",
     "mui-datatables": "^2.0.0-beta-44",
     "react": "^16.6.3",
     "react-dom": "^16.6.3",
     "react-fast-compare": "^2.0.4",
-    "react-scripts": "4.0.3",
+    "react-scripts": "2.1.1",
     "react-select": "^2.2.0",
-    "timelines-chart": "^2.6.8",
-    "uuid": "^8.3.2"
+    "timelines-chart": "^2.6.8"
   },
   "scripts": {
     "start": "react-scripts start",
