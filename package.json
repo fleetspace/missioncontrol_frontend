@@ -12,7 +12,7 @@
     "react": "^16.6.3",
     "react-dom": "^16.6.3",
     "react-fast-compare": "^2.0.4",
-    "react-scripts": "4.0.3",
+    "react-scripts": "5.0.1",
     "react-select": "^2.2.0",
     "timelines-chart": "^2.6.8",
     "uuid": "^8.3.2"
